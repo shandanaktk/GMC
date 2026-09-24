@@ -486,6 +486,16 @@ svg { flex-shrink: 0; }
 .dashboard-shell .products-table th { font-size: 9px; }.dashboard-shell .products-table td, .dashboard-shell .issue-link { font-size: 10px; }.dashboard-shell .products-table td:first-child b { font-size: 11px; }
 .dashboard-shell .search-field input, .dashboard-shell .status-tabs button, .dashboard-shell .filter-button { font-size: 10px; }
 .dashboard-shell .diagnostic-list h3 { font-size: 12px; }.dashboard-shell .diagnostic-list p { font-size: 10px; }
+.dashboard-shell .header-crumbs, .dashboard-shell .connection-pill { font-size: 10px; }
+.dashboard-shell .account-switcher small, .dashboard-shell .sidebar-user small { font-size: 10px; }
+.dashboard-shell .sidebar-help p, .dashboard-shell .sidebar-help button { font-size: 10px; }
+.dashboard-shell .chart-summary span, .dashboard-shell .time-control button { font-size: 10px; }
+.dashboard-shell .distribution-legend span, .dashboard-shell .distribution-legend small { font-size: 10px; }
+.dashboard-shell .account-totals small, .dashboard-shell .account-link { font-size: 10px; }
+.dashboard-shell .specialist-strip p, .dashboard-shell .specialist-strip .panel-kicker { font-size: 10px; }
+.dashboard-shell .product-stat-row small, .dashboard-shell .product-stat-row em, .dashboard-shell .pagination { font-size: 10px; }
+.dashboard-shell .account-hero__status p, .dashboard-shell .account-hero__detail p, .dashboard-shell .account-hero__detail button { font-size: 10px; }
+.dashboard-shell .fix-estimate > p, .dashboard-shell .fix-estimate > div, .dashboard-shell .expert-card p { font-size: 10px; }
 
 @media (max-width: 1100px) {
   .editorial-hero { grid-template-columns: minmax(0, .84fr) minmax(440px, 1.16fr); gap: 35px; }.editorial-hero h1 { font-size: clamp(58px, 6vw, 72px); }.hero-audit-card { padding: 19px; }.hero-audit-score { min-height: 135px; }
