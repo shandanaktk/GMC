@@ -166,3 +166,77 @@ export const notifications = [
   { id: 2, title: '31 price mismatches found', body: 'Review products before your next feed sync.', time: '24 min ago', unread: true },
   { id: 3, title: 'Audit completed', body: '2,847 products were checked successfully.', time: 'Today, 9:42 AM', unread: false },
 ]
+
+export const auditDiscoveryCards = [
+  {
+    id: 'disapprovals',
+    number: '01',
+    eyebrow: 'Disapprovals',
+    title: 'See exactly what Google rejected.',
+    description: 'Every affected product, grouped by the reason it stopped serving.',
+    stat: '96',
+    statLabel: 'critical items',
+    tone: 'coral',
+  },
+  {
+    id: 'mismatch',
+    number: '02',
+    eyebrow: 'Feed quality',
+    title: 'Catch the small mismatches costing reach.',
+    description: 'Price, availability, GTIN, brand, image, and landing-page checks.',
+    stat: '286',
+    statLabel: 'warnings found',
+    tone: 'gold',
+  },
+  {
+    id: 'account',
+    number: '03',
+    eyebrow: 'Account health',
+    title: 'Understand why the whole account is at risk.',
+    description: 'Policy and setup diagnostics, including the exact suspension reason.',
+    stat: '5',
+    statLabel: 'account issues',
+    tone: 'sage',
+  },
+  {
+    id: 'priority',
+    number: '04',
+    eyebrow: 'Priority',
+    title: 'Know what deserves your attention first.',
+    description: 'A severity-ranked queue turns hundreds of diagnostics into a clear plan.',
+    stat: '2–3',
+    statLabel: 'days to resolve',
+    tone: 'blue',
+  },
+  {
+    id: 'progress',
+    number: '05',
+    eyebrow: 'Progress',
+    title: 'Watch catalog health move in the right direction.',
+    description: 'A simple score and trend line make improvement easy to track over time.',
+    stat: '+14',
+    statLabel: 'points this week',
+    tone: 'lime',
+  },
+]
+
+export const demoMerchantStories = [
+  {
+    quote: 'I don’t need another wall of diagnostics. I need to know what is broken, why it matters, and what to fix before lunch.',
+    name: 'Avery Chen',
+    role: 'Sample fashion merchant',
+    result: '31 price mismatches prioritized',
+  },
+  {
+    quote: 'The score gives everyone the same starting point. Our feed team can finally discuss progress without opening five different reports.',
+    name: 'Marcus Hill',
+    role: 'Sample homeware merchant',
+    result: 'Health score up 14 points',
+  },
+  {
+    quote: 'The suspension reason was the part we kept missing. Seeing it beside the product issues made the route back to approval much clearer.',
+    name: 'Nora Ellis',
+    role: 'Sample outdoor merchant',
+    result: 'Account action plan created',
+  },
+]

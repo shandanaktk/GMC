@@ -40,7 +40,6 @@ import {
   UserRoundCheck,
   WandSparkles,
   X,
-  Zap,
 } from 'lucide-react'
 import {
   Area,
@@ -55,6 +54,7 @@ import {
   YAxis,
 } from 'recharts'
 import { auditService } from './services/auditService'
+import { auditDiscoveryCards, demoMerchantStories } from './mockData'
 
 const numberFormatter = new Intl.NumberFormat('en-US')
 
@@ -72,7 +72,7 @@ function GoogleMark() {
 function Logo({ compact = false, inverse = false }) {
   return (
     <div className={`brand ${compact ? 'brand--compact' : ''} ${inverse ? 'brand--inverse' : ''}`}>
-      <span className="brand-mark"><span /><span /><span /></span>
+      <span className="brand-mark" aria-hidden="true"><b>M</b><i /></span>
       {!compact && <span className="brand-word">Merchant<span>Audit</span></span>}
     </div>
   )
@@ -87,91 +87,205 @@ function ThemeToggle({ theme, onToggle, label = false }) {
   )
 }
 
+function DiscoveryGraphic({ type, stat }) {
+  if (type === 'disapprovals') {
+    return (
+      <div className="discovery-graphic discovery-graphic--products" aria-hidden="true">
+        <div className="mini-product mini-product--back"><span /><i /><b>SKU 2041</b></div>
+        <div className="mini-product"><span><PackageCheck /></span><i /><i /><b>Invalid GTIN</b></div>
+        <em><AlertCircle /> {stat} blocked</em>
+      </div>
+    )
+  }
+  if (type === 'mismatch') {
+    return (
+      <div className="discovery-graphic discovery-graphic--compare" aria-hidden="true">
+        <div><small>FEED PRICE</small><b>$128</b><span>Submitted</span></div>
+        <i><ArrowRight /></i>
+        <div><small>PAGE PRICE</small><b>$119</b><span>Live site</span></div>
+        <em><AlertTriangle /> Values don’t match</em>
+      </div>
+    )
+  }
+  if (type === 'account') {
+    return (
+      <div className="discovery-graphic discovery-graphic--shield" aria-hidden="true">
+        <span className="shield-orbit"><i /><i /><i /></span>
+        <span className="shield-core"><ShieldAlert /><b>{stat}</b></span>
+        <em>Account diagnostics</em>
+      </div>
+    )
+  }
+  if (type === 'priority') {
+    return (
+      <div className="discovery-graphic discovery-graphic--queue" aria-hidden="true">
+        <div><b>01</b><span><i />Invalid GTIN</span><em>64</em></div>
+        <div><b>02</b><span><i />Price mismatch</span><em>31</em></div>
+        <div><b>03</b><span><i />Missing brand</span><em>18</em></div>
+      </div>
+    )
+  }
+  return (
+    <div className="discovery-graphic discovery-graphic--trend" aria-hidden="true">
+      <div><small>HEALTH TREND</small><b>{stat}</b><span>points</span></div>
+      <svg viewBox="0 0 260 100" preserveAspectRatio="none"><path d="M2 88 C35 84 43 72 70 75 S110 58 132 63 S172 39 194 43 S225 22 258 12" /><path className="trend-area" d="M2 88 C35 84 43 72 70 75 S110 58 132 63 S172 39 194 43 S225 22 258 12 L258 100 L2 100Z" /></svg>
+    </div>
+  )
+}
+
+function DiscoveryCarousel({ onSample }) {
+  const trackRef = useRef(null)
+  const dragRef = useRef({ active: false, startX: 0, startScroll: 0 })
+  const [active, setActive] = useState(0)
+
+  const goTo = (nextIndex) => {
+    const next = Math.max(0, Math.min(auditDiscoveryCards.length - 1, nextIndex))
+    const track = trackRef.current
+    const card = track?.children[next]
+    if (track && card) track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: 'smooth' })
+    setActive(next)
+  }
+
+  const syncActive = () => {
+    const track = trackRef.current
+    if (!track) return
+    const positions = [...track.children].map((card) => Math.abs(card.offsetLeft - track.offsetLeft - track.scrollLeft))
+    setActive(positions.indexOf(Math.min(...positions)))
+  }
+
+  const startDrag = (event) => {
+    if (event.pointerType !== 'mouse') return
+    dragRef.current = { active: true, startX: event.clientX, startScroll: trackRef.current.scrollLeft }
+    event.currentTarget.setPointerCapture(event.pointerId)
+    event.currentTarget.classList.add('is-dragging')
+  }
+
+  const moveDrag = (event) => {
+    if (!dragRef.current.active) return
+    trackRef.current.scrollLeft = dragRef.current.startScroll - (event.clientX - dragRef.current.startX)
+  }
+
+  const endDrag = (event) => {
+    if (!dragRef.current.active) return
+    dragRef.current.active = false
+    event.currentTarget.classList.remove('is-dragging')
+    syncActive()
+  }
+
+  return (
+    <section className="discovery-section" id="what-we-find">
+      <div className="shell-width discovery-head">
+        <div><span className="kicker">WHAT THE AUDIT UNCOVERS</span><h2>Every issue has<br />a next move.</h2></div>
+        <div className="discovery-copy"><p>Swipe through a clearer way to understand your catalog. No vague error codes. No spreadsheet archaeology.</p><span><i /> Drag to explore</span></div>
+        <div className="carousel-arrows">
+          <button onClick={() => goTo(active - 1)} disabled={active === 0} aria-label="Previous audit check"><ChevronLeft /></button>
+          <button onClick={() => goTo(active + 1)} disabled={active === auditDiscoveryCards.length - 1} aria-label="Next audit check"><ChevronRight /></button>
+        </div>
+      </div>
+      <div className="discovery-track-shell">
+        <div className="discovery-track" ref={trackRef} onScroll={syncActive} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
+          {auditDiscoveryCards.map((card, index) => (
+            <article className={`discovery-card discovery-card--${card.tone} ${active === index ? 'is-active' : ''}`} key={card.id}>
+              <header><span>{card.number}</span><i>{card.eyebrow}</i><ArrowUpRight /></header>
+              <DiscoveryGraphic type={card.id} stat={card.stat} />
+              <h3>{card.title}</h3>
+              <p>{card.description}</p>
+              <footer><strong>{card.stat}</strong><span>{card.statLabel}</span></footer>
+            </article>
+          ))}
+          <article className="discovery-card discovery-card--final">
+            <span className="kicker">SEE IT ALL TOGETHER</span><h3>Your catalog has a story. Read the whole thing.</h3><button onClick={onSample}>Open sample audit <ArrowUpRight /></button>
+          </article>
+        </div>
+      </div>
+      <div className="shell-width carousel-progress"><span><i style={{ width: `${((active + 1) / auditDiscoveryCards.length) * 100}%` }} /></span><b>{String(active + 1).padStart(2, '0')} / {String(auditDiscoveryCards.length).padStart(2, '0')}</b></div>
+    </section>
+  )
+}
+
+function MerchantStories() {
+  const [active, setActive] = useState(0)
+  const touchStart = useRef(0)
+  const story = demoMerchantStories[active]
+  const goTo = (index) => setActive((index + demoMerchantStories.length) % demoMerchantStories.length)
+
+  return (
+    <section className="stories-section" id="merchant-stories" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX }} onTouchEnd={(event) => { const distance = event.changedTouches[0].clientX - touchStart.current; if (Math.abs(distance) > 45) goTo(active + (distance < 0 ? 1 : -1)) }}>
+      <div className="shell-width stories-layout">
+        <div className="stories-heading"><span className="kicker">SAMPLE MERCHANT STORIES</span><h2>But, don’t take<br />it from us<span>...</span></h2><p>Swipe through a few examples of what a clear, focused audit should feel like.</p><div className="stories-swipe-note"><ArrowRight /> Swipe or use the arrows</div></div>
+        <article className="story-card" key={active}>
+          <div className="story-quote-mark">“</div>
+          <blockquote>{story.quote}</blockquote>
+          <div className="story-quote-mark story-quote-mark--close">”</div>
+          <footer><div className="story-avatar">{story.name.split(' ').map((part) => part[0]).join('')}</div><div><b>{story.name}</b><small>{story.role}</small></div><span><Check /> {story.result}</span></footer>
+          <div className="story-controls"><b>{String(active + 1).padStart(2, '0')}<span> / {String(demoMerchantStories.length).padStart(2, '0')}</span></b><div><button onClick={() => goTo(active - 1)} aria-label="Previous story"><ChevronLeft /></button><button onClick={() => goTo(active + 1)} aria-label="Next story"><ChevronRight /></button></div></div>
+        </article>
+      </div>
+    </section>
+  )
+}
+
 function LandingPage({ theme, onThemeToggle, onSignIn, onSample, signingIn }) {
   return (
-    <div className="landing">
-      <header className="landing-nav shell-width">
-        <Logo />
-        <nav className="landing-links" aria-label="Main navigation">
-          <a href="#how-it-works">How it works</a>
-          <a href="#features">What we check</a>
-          <a href="#security">Security</a>
-        </nav>
-        <div className="landing-actions">
-          <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-          <button className="button button--small button--ink" onClick={onSignIn} disabled={signingIn}>
-            {signingIn ? <span className="mini-spinner" /> : 'Start free audit'}
-          </button>
-        </div>
-      </header>
+    <div className="landing landing--editorial">
+      <div className="landing-hero-shell">
+        <header className="landing-nav shell-width">
+          <Logo inverse />
+          <nav className="landing-links" aria-label="Main navigation">
+            <a href="#what-we-find">What we find <span>+</span></a>
+            <a href="#how-it-works">How it works <span>+</span></a>
+            <a href="#security">Security <span>+</span></a>
+          </nav>
+          <div className="landing-actions">
+            <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+            <button className="editorial-nav-cta" onClick={onSignIn} disabled={signingIn}>{signingIn ? 'Connecting…' : 'Start free audit'} <ArrowUpRight /></button>
+          </div>
+        </header>
+
+        <section className="editorial-hero shell-width">
+          <span className="hero-side-note hero-side-note--left">READ-ONLY GOOGLE ACCESS <i /></span>
+          <span className="hero-side-note hero-side-note--right"><i /> RESULTS IN ABOUT 60 SECONDS</span>
+          <div className="editorial-hero__copy">
+            <span className="hero-kicker"><i /> GOOGLE MERCHANT CENTER, MADE LEGIBLE</span>
+            <h1>Know what <span className="scribble-word">Google sees.</span><br />Fix what it<br /><em>doesn’t like.</em></h1>
+            <p>A beautifully simple audit for product disapprovals, feed warnings, and account-level problems—ranked by what deserves your attention first.</p>
+            <div className="editorial-hero__actions">
+              <button className="split-cta" onClick={onSignIn} disabled={signingIn}><span>{signingIn ? 'Connecting securely…' : 'Audit my GMC'}</span><i>{signingIn ? <span className="mini-spinner" /> : <ArrowRight />}</i></button>
+              <button className="hero-sample-link" onClick={onSample}>Explore a sample <ArrowUpRight /></button>
+            </div>
+          </div>
+          <div className="hero-audit-visual" aria-label="Sample MerchantAudit dashboard card">
+            <div className="hero-audit-card">
+              <header><Logo compact /><div><span>LIVE AUDIT</span><b>Catalog overview</b></div><em><i /> Connected</em></header>
+              <div className="hero-audit-score">
+                <div className="hero-score-ring"><span><b>72</b><small>/100</small></span></div>
+                <section><small>GMC HEALTH SCORE</small><h3>Needs attention</h3><p><TrendingUp /> 4 points since last audit</p></section>
+              </div>
+              <div className="hero-audit-stats"><div><small>APPROVED</small><b>2,421</b><span>85% of catalog</span></div><div><small>WARNINGS</small><b>286</b><span>Need a review</span></div><div><small>CRITICAL</small><b>96</b><span>Fix these first</span></div></div>
+              <div className="hero-audit-list"><header><b>Top priorities</b><span>VIEW ALL</span></header><div><i className="red-dot" /><span>Invalid or missing GTIN</span><b>64</b></div><div><i className="orange-dot" /><span>Price mismatch</span><b>31</b></div><div><i className="blue-dot" /><span>Missing brand</span><b>18</b></div></div>
+            </div>
+            <div className="hero-visual-float hero-visual-float--score"><Sparkles /><span><b>+4 points</b><small>Health is improving</small></span></div>
+            <div className="hero-visual-float hero-visual-float--alert"><AlertTriangle /><span><b>96 critical</b><small>Prioritized for you</small></span></div>
+          </div>
+          <div className="hero-scroll-cue"><span>SCROLL TO EXPLORE</span><i><ArrowDown /></i></div>
+        </section>
+
+        <div className="hero-marquee" aria-hidden="true"><div><span>DISAPPROVALS</span><i>✦</i><span>ACCOUNT HEALTH</span><i>✦</i><span>FEED QUALITY</span><i>✦</i><span>FIX PRIORITY</span><i>✦</i><span>DISAPPROVALS</span><i>✦</i><span>ACCOUNT HEALTH</span><i>✦</i><span>FEED QUALITY</span><i>✦</i><span>FIX PRIORITY</span><i>✦</i></div></div>
+      </div>
 
       <main>
-        <section className="hero shell-width">
-          <div className="hero-copy">
-            <div className="eyebrow"><span className="eyebrow-dot" /> GOOGLE MERCHANT CENTER AUDITOR</div>
-            <h1>Turn product issues into a <em>clear fix list.</em></h1>
-            <p className="hero-lead">Find disapprovals, account issues, and costly feed errors in about a minute—with a health score that makes your next move obvious.</p>
-            <div className="hero-actions">
-              <button className="button button--primary button--large" onClick={onSignIn} disabled={signingIn}>
-                {signingIn ? <><span className="mini-spinner mini-spinner--light" /> Connecting…</> : <><GoogleMark /> Continue with Google <ArrowRight size={18} /></>}
-              </button>
-              <button className="button button--ghost button--large" onClick={onSample}>Explore sample audit</button>
-            </div>
-            <div className="trust-row">
-              <span><ShieldCheck size={16} /> Read-only access</span>
-              <span><Clock3 size={16} /> Results in ~60 sec</span>
-              <span><Zap size={16} /> No credit card</span>
-            </div>
-          </div>
-
-          <div className="hero-visual" aria-label="Sample MerchantAudit dashboard preview">
-            <div className="preview-glow" />
-            <div className="preview-window">
-              <div className="preview-bar">
-                <span className="preview-dots"><i /><i /><i /></span>
-                <span className="preview-address"><ShieldCheck size={11} /> audit.merchantaudit.com</span>
-                <span />
-              </div>
-              <div className="preview-body">
-                <div className="preview-side"><Logo compact /><i /><i /><i /><i /></div>
-                <div className="preview-main">
-                  <div className="preview-heading"><div><small>GOOD MORNING</small><strong>Catalog overview</strong></div><span /></div>
-                  <div className="preview-metrics">
-                    <div className="preview-score"><div className="preview-ring"><b>72</b><small>/100</small></div><span>Health score</span></div>
-                    <div className="preview-stat"><small>APPROVED</small><b>2,421</b><span className="preview-up"><TrendingUp size={10} /> 4.8%</span></div>
-                    <div className="preview-stat"><small>NEEDS ACTION</small><b>382</b><span>13.4% of catalog</span></div>
-                  </div>
-                  <div className="preview-lower">
-                    <div className="preview-chart">
-                      <small>HEALTH TREND</small>
-                      <svg viewBox="0 0 360 115" preserveAspectRatio="none">
-                        <defs><linearGradient id="heroChart" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#b9e04c" stopOpacity=".42" /><stop offset="1" stopColor="#b9e04c" stopOpacity="0" /></linearGradient></defs>
-                        <path d="M0 90 C45 85 57 93 95 67 S155 75 190 51 S243 62 275 40 S330 32 360 14 L360 115 L0 115Z" fill="url(#heroChart)" />
-                        <path d="M0 90 C45 85 57 93 95 67 S155 75 190 51 S243 62 275 40 S330 32 360 14" fill="none" stroke="#8eb923" strokeWidth="3" />
-                      </svg>
-                    </div>
-                    <div className="preview-issues"><small>FIX FIRST</small><p><i className="dot-red" /> Invalid GTIN <b>64</b></p><p><i className="dot-orange" /> Price mismatch <b>31</b></p><p><i className="dot-yellow" /> Missing brand <b>18</b></p></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="floating-note floating-note--top"><span><Sparkles size={15} /></span><div><b>+4 points</b><small>since last audit</small></div></div>
-            <div className="floating-note floating-note--bottom"><span className="floating-note__alert"><AlertTriangle size={15} /></span><div><b>95 products</b><small>need attention</small></div></div>
-          </div>
+        <section className="intro-statement shell-width">
+          <span className="intro-index">01 — WHY IT EXISTS</span>
+          <p>Merchant Center tells you <em>what happened.</em></p>
+          <h2>We show you what to do next.</h2>
+          <div className="intro-foot"><p>One focused view of your catalog, the issues holding it back, and the shortest path to better account health.</p><button onClick={onSample}>View the live demo <span><ArrowDown /></span></button></div>
         </section>
 
-        <section className="proof-strip">
-          <div className="shell-width proof-grid">
-            <div><b>2,800+</b><span>products checked in the sample</span></div>
-            <div><b>1 min</b><span>to a prioritized action plan</span></div>
-            <div><b>100%</b><span>read-only Google access</span></div>
-            <div><b>0</b><span>changes made to your account</span></div>
-          </div>
-        </section>
+        <DiscoveryCarousel onSample={onSample} />
 
         <section className="section shell-width" id="how-it-works">
           <div className="section-heading">
-            <div><span className="kicker">THE SIMPLE VERSION</span><h2>Clarity in three small steps.</h2></div>
+            <div><span className="kicker">THE SIMPLE VERSION</span><h2>From Google login<br />to a fix list.</h2></div>
             <p>No spreadsheets. No hunting through Merchant Center. Just the issues that matter and a sensible order to fix them.</p>
           </div>
           <div className="steps-grid">
@@ -180,6 +294,8 @@ function LandingPage({ theme, onThemeToggle, onSignIn, onSample, signingIn }) {
             <article className="step-card"><span className="step-number">03</span><div className="step-icon"><ClipboardCheck /></div><h3>Get your fix list</h3><p>See a health score, the highest-impact problems, and clean product-level detail.</p><small>ACTIONABLE RESULTS</small></article>
           </div>
         </section>
+
+        <MerchantStories />
 
         <section className="section check-section" id="features">
           <div className="shell-width check-layout">
@@ -201,7 +317,7 @@ function LandingPage({ theme, onThemeToggle, onSignIn, onSample, signingIn }) {
         <section className="section shell-width security-section" id="security">
           <div className="security-icon"><ShieldCheck /></div>
           <span className="kicker">BUILT WITH RESPECT FOR YOUR DATA</span>
-          <h2>We look. We never touch.</h2>
+          <h2>We look.<br /><em>We never touch.</em></h2>
           <p>MerchantAudit uses secure, session-based Google authentication and requests access only to read the Merchant Center data needed for your audit.</p>
           <div className="security-points"><span><Check /> No catalog edits</span><span><Check /> No payment required</span><span><Check /> Disconnect anytime</span></div>
         </section>
@@ -337,8 +453,8 @@ function OverviewPage({ data, onRunAudit, onNavigate, onIssue, onSpecialist, onE
   const { summary, account, healthTrend, productDistribution, priorityIssues, accountIssues } = data
   return (
     <div className="page page--overview">
-      <div className="page-intro">
-        <div><span className="overline">AUDIT SNAPSHOT</span><h1>Good morning, {data.user.name.split(' ')[0]}.</h1><p>Here’s what’s happening across your Merchant Center catalog.</p></div>
+      <div className="page-intro overview-intro">
+        <div><span className="overline">AUDIT SNAPSHOT</span><h1>Good morning, <em>{data.user.name.split(' ')[0]}.</em></h1><p>Here’s what’s happening across your Merchant Center catalog.</p></div>
         <div className="page-actions"><button className="button button--outline" onClick={onPrint}><FileText size={17} /> Generate report</button><button className="button button--primary" onClick={onRunAudit}><RefreshCw size={17} /> Run new audit</button></div>
       </div>
 
