@@ -12,10 +12,11 @@
   "dependencies": {
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
-    "vite": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "recharts": "latest"
+    "react-router-dom": "^7.18.4",
+    "recharts": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
     "@eslint/js": "latest",

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
   Activity,
   AlertCircle,
@@ -22,6 +23,7 @@ import {
   FileText,
   Filter,
   HelpCircle,
+  House,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
@@ -384,7 +386,7 @@ function Sidebar({ activePage, onNavigate, account, user, open, onClose, onLogou
   )
 }
 
-function DashboardHeader({ activePage, account, theme, onThemeToggle, onMenu, notifications, notificationOpen, setNotificationOpen }) {
+function DashboardHeader({ activePage, account, theme, onThemeToggle, onMenu, onGoHome, notifications, notificationOpen, setNotificationOpen }) {
   const titles = { overview: 'Overview', products: 'Product issues', account: 'Account health' }
   const notificationRef = useRef(null)
 
@@ -402,6 +404,7 @@ function DashboardHeader({ activePage, account, theme, onThemeToggle, onMenu, no
       <div className="mobile-brand"><Logo compact /><span>{titles[activePage]}</span></div>
       <div className="header-crumbs"><span>{account.name}</span><ChevronRight size={13} /><b>{titles[activePage]}</b></div>
       <div className="header-actions">
+        <button className="icon-button dashboard-home-button" onClick={onGoHome} aria-label="Back to landing page" title="Back to landing page"><House size={18} /></button>
         <div className="connection-pill"><i /> GMC connected</div>
         <ThemeToggle theme={theme} onToggle={onThemeToggle} />
         <div className="notification-wrap" ref={notificationRef}>
@@ -700,8 +703,11 @@ function MobileBottomNav({ activePage, onNavigate }) {
   return <nav className="mobile-bottom-nav">{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={activePage === id ? 'active' : ''} onClick={() => onNavigate(id)}><Icon /><span>{id === 'products' ? 'Products' : id === 'account' ? 'Account' : label}</span></button>)}</nav>
 }
 
-function Dashboard({ data, theme, onThemeToggle, onLogout, setData }) {
-  const [activePage, setActivePage] = useState('overview')
+function Dashboard({ data, theme, onThemeToggle, onLogout, onGoHome, setData }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const activePage = location.pathname.endsWith('/products') ? 'products' : location.pathname.endsWith('/account') ? 'account' : 'overview'
+  const navigatePage = (page) => navigate(page === 'overview' ? '/dashboard' : `/dashboard/${page}`)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notificationOpen, setNotificationOpen] = useState(false)
   const [auditProgress, setAuditProgress] = useState(null)
@@ -741,15 +747,15 @@ function Dashboard({ data, theme, onThemeToggle, onLogout, setData }) {
 
   return (
     <div className="dashboard-shell">
-      <Sidebar activePage={activePage} onNavigate={setActivePage} account={data.account} user={data.user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={onLogout} onSpecialist={() => setSpecialistOpen(true)} theme={theme} onThemeToggle={onThemeToggle} />
+      <Sidebar activePage={activePage} onNavigate={navigatePage} account={data.account} user={data.user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={onLogout} onSpecialist={() => setSpecialistOpen(true)} theme={theme} onThemeToggle={onThemeToggle} />
       <div className="dashboard-main">
-        <DashboardHeader activePage={activePage} account={data.account} theme={theme} onThemeToggle={onThemeToggle} onMenu={() => setSidebarOpen(true)} notifications={data.notifications} notificationOpen={notificationOpen} setNotificationOpen={setNotificationOpen} />
-        {activePage === 'overview' && <OverviewPage {...commonProps} onRunAudit={runAudit} onNavigate={setActivePage} onIssue={setSelectedIssue} onExport={exportCsv} onPrint={() => window.print()} />}
+        <DashboardHeader activePage={activePage} account={data.account} theme={theme} onThemeToggle={onThemeToggle} onMenu={() => setSidebarOpen(true)} onGoHome={onGoHome} notifications={data.notifications} notificationOpen={notificationOpen} setNotificationOpen={setNotificationOpen} />
+        {activePage === 'overview' && <OverviewPage {...commonProps} onRunAudit={runAudit} onNavigate={navigatePage} onIssue={setSelectedIssue} onExport={exportCsv} onPrint={() => window.print()} />}
         {activePage === 'products' && <ProductsPage data={data} onIssue={setSelectedIssue} onExport={exportCsv} />}
         {activePage === 'account' && <AccountPage {...commonProps} />}
         <footer className="dashboard-footer"><span>MerchantAudit demo · Data last synced {data.account.lastAudit}</span><span>Read-only connection <ShieldCheck size={14} /></span></footer>
       </div>
-      <MobileBottomNav activePage={activePage} onNavigate={setActivePage} />
+      <MobileBottomNav activePage={activePage} onNavigate={navigatePage} />
       {auditProgress && <AuditModal progress={auditProgress} onClose={() => { setAuditProgress(null); setToast('Your audit results are up to date.') }} />}
       <IssueDrawer issue={selectedIssue} onClose={() => setSelectedIssue(null)} onSpecialist={() => setSpecialistOpen(true)} />
       {specialistOpen && <SpecialistModal user={data.user} onClose={() => setSpecialistOpen(false)} onSubmit={submitSpecialist} />}
@@ -758,9 +764,14 @@ function Dashboard({ data, theme, onThemeToggle, onLogout, setData }) {
   )
 }
 
+function DashboardLoading() {
+  return <div className="route-loader"><Logo /><span className="route-loader__orbit"><i /></span><p>Preparing your audit workspace…</p></div>
+}
+
 export default function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [theme, setTheme] = useState(() => localStorage.getItem('merchant-audit-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
-  const [view, setView] = useState('landing')
   const [data, setData] = useState(null)
   const [signingIn, setSigningIn] = useState(false)
 
@@ -771,14 +782,47 @@ export default function App() {
     localStorage.setItem('merchant-audit-theme', theme)
   }, [theme])
 
+  useEffect(() => {
+    if (!location.pathname.startsWith('/dashboard') || data) return undefined
+    let active = true
+    auditService.getDashboard().then((dashboard) => { if (active) setData(dashboard) })
+    return () => { active = false }
+  }, [location.pathname, data])
+
   const toggleTheme = () => setTheme((current) => current === 'dark' ? 'light' : 'dark')
 
   const enterDashboard = async (googleSignIn = false) => {
-    if (googleSignIn) { setSigningIn(true); await auditService.signInWithGoogle() }
-    const dashboard = await auditService.getDashboard()
-    setData(dashboard); setView('dashboard'); setSigningIn(false); window.scrollTo(0, 0)
+    setSigningIn(true)
+    try {
+      if (googleSignIn) await auditService.signInWithGoogle()
+      const dashboard = await auditService.getDashboard()
+      setData(dashboard)
+      navigate('/dashboard')
+      window.scrollTo(0, 0)
+    } finally {
+      setSigningIn(false)
+    }
   }
 
-  if (view === 'dashboard' && data) return <Dashboard data={data} setData={setData} theme={theme} onThemeToggle={toggleTheme} onLogout={() => { setView('landing'); setData(null); window.scrollTo(0, 0) }} />
-  return <LandingPage theme={theme} onThemeToggle={toggleTheme} onSignIn={() => enterDashboard(true)} onSample={() => enterDashboard(false)} signingIn={signingIn} />
+  const dashboardRoute = data ? (
+    <Dashboard
+      data={data}
+      setData={setData}
+      theme={theme}
+      onThemeToggle={toggleTheme}
+      onGoHome={() => { navigate('/'); window.scrollTo(0, 0) }}
+      onLogout={() => { setData(null); navigate('/'); window.scrollTo(0, 0) }}
+    />
+  ) : <DashboardLoading />
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage theme={theme} onThemeToggle={toggleTheme} onSignIn={() => enterDashboard(true)} onSample={() => enterDashboard(false)} signingIn={signingIn} />} />
+      <Route path="/dashboard" element={dashboardRoute} />
+      <Route path="/dashboard/products" element={dashboardRoute} />
+      <Route path="/dashboard/account" element={dashboardRoute} />
+      <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
