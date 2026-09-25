@@ -13,35 +13,35 @@ export const merchantAccount = {
   name: 'Northstar Goods',
   country: 'United States',
   currency: 'USD',
-  status: 'suspended',
-  suspensionReason: 'Website needs improvement',
-  suspensionDetail:
-    'Google found that your online store needs improvements to provide customers with a transparent and professional shopping experience.',
+  status: 'healthy',
+  statusLabel: 'Account in good standing',
+  statusDetail:
+    'Your store meets Google’s expectations for a transparent, professional shopping experience. Keep monitoring product and policy checks to stay ahead.',
   connectedAt: 'Sep 18, 2026',
   lastAudit: 'Today, 09:42 AM',
 }
 
 export const auditSummary = {
-  healthScore: 72,
-  previousScore: 68,
-  grade: 'Needs attention',
+  healthScore: 88,
+  previousScore: 84,
+  grade: 'Looking strong',
   productsChecked: 2847,
   approved: 2421,
   warnings: 286,
   critical: 96,
   pending: 44,
   accountIssues: 5,
-  estimatedFixTime: '2–3 days',
+  estimatedFixTime: '1–2 days',
 }
 
 export const healthTrend = [
-  { date: 'Sep 19', score: 58 },
-  { date: 'Sep 20', score: 61 },
-  { date: 'Sep 21', score: 59 },
-  { date: 'Sep 22', score: 65 },
-  { date: 'Sep 23', score: 67 },
-  { date: 'Sep 24', score: 68 },
-  { date: 'Sep 25', score: 72 },
+  { date: 'Sep 19', score: 74 },
+  { date: 'Sep 20', score: 77 },
+  { date: 'Sep 21', score: 76 },
+  { date: 'Sep 22', score: 81 },
+  { date: 'Sep 23', score: 83 },
+  { date: 'Sep 24', score: 84 },
+  { date: 'Sep 25', score: 88 },
 ]
 
 export const productDistribution = [
@@ -97,19 +97,21 @@ export const priorityIssues = [
 export const accountIssues = [
   {
     id: 'ACC-001',
-    title: 'Website needs improvement',
-    type: 'Suspension reason',
-    severity: 'critical',
-    description: 'Your Merchant Center account is suspended until the website experience and required business information are improved.',
-    action: 'Review website policy',
+    title: 'Store experience looks solid',
+    type: 'Account status',
+    severity: 'info',
+    description: 'Google can verify your site experience. Keep policies and contact details easy to find so the account stays eligible.',
+    action: 'Read website policy',
+    href: 'https://support.google.com/merchants/answer/6150127',
   },
   {
     id: 'ACC-002',
-    title: 'Missing return policy',
+    title: 'Return policy ready to strengthen',
     type: 'Policy requirement',
-    severity: 'critical',
-    description: 'A clear and easily discoverable return and refund policy could not be verified.',
-    action: 'Add policy page',
+    severity: 'warning',
+    description: 'Make sure your return and refund policy stays clearly linked from checkout and product pages.',
+    action: 'Review return policy',
+    href: 'https://support.google.com/merchants/answer/12079604',
   },
   {
     id: 'ACC-003',
@@ -118,6 +120,7 @@ export const accountIssues = [
     severity: 'warning',
     description: 'One or more target regions do not have a complete delivery rate or transit time.',
     action: 'Review shipping',
+    href: 'https://support.google.com/merchants/answer/4752265',
   },
   {
     id: 'ACC-004',
@@ -126,14 +129,16 @@ export const accountIssues = [
     severity: 'warning',
     description: 'Verify the customer support phone number associated with this business.',
     action: 'Verify details',
+    href: 'https://support.google.com/merchants/answer/13693865',
   },
   {
     id: 'ACC-005',
-    title: 'Automatic item updates disabled',
+    title: 'Automatic item updates available',
     type: 'Data quality',
     severity: 'info',
     description: 'Enable automatic updates to reduce temporary price and availability mismatches.',
     action: 'Enable updates',
+    href: 'https://support.google.com/merchants/answer/4752265',
   },
 ]
 
