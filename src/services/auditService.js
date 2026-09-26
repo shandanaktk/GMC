@@ -1,5 +1,6 @@
 import {
   accountIssues,
+  approvalChecks,
   auditSteps,
   auditSummary,
   demoUser,
@@ -31,6 +32,7 @@ export const auditService = {
       productDistribution,
       priorityIssues,
       accountIssues,
+      approvalChecks,
       products,
       notifications,
     }

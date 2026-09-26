@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Activity,
   AlertCircle,
   AlertTriangle,
   ArrowDown,
@@ -9,6 +8,8 @@ import {
   ArrowUp,
   ArrowUpRight,
   Bell,
+  Bot,
+  BriefcaseBusiness,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -21,17 +22,20 @@ import {
   FileSearch,
   FileText,
   Filter,
+  Globe2,
   HelpCircle,
   House,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
   Menu,
+  MessageCircle,
   Moon,
   MoreHorizontal,
   PackageCheck,
   RefreshCw,
   Search,
+  Send,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -204,7 +208,7 @@ function DiscoveryCarousel({ onSample }) {
   )
 }
 
-function MerchantStories() {
+export function MerchantStories() {
   const [active, setActive] = useState(0)
   const touchStart = useRef(0)
   const story = demoMerchantStories[active]
@@ -296,7 +300,9 @@ function LandingPage({ theme, onThemeToggle, onSignIn, onSample, signingIn, onLe
           </div>
         </section>
 
+        {/* Merchant stories are intentionally hidden.
         <MerchantStories />
+        */}
 
         <section className="section check-section" id="features">
           <div className="shell-width check-layout">
@@ -348,6 +354,7 @@ const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'products', label: 'Product issues', icon: PackageCheck },
   { id: 'account', label: 'Account health', icon: ShieldCheck },
+  { id: 'agency', label: 'Agency mode', icon: BriefcaseBusiness },
 ]
 
 function Sidebar({ activePage, onNavigate, account, user, open, onClose, onLogout, onSpecialist, onHelp, theme, onThemeToggle }) {
@@ -389,7 +396,7 @@ function Sidebar({ activePage, onNavigate, account, user, open, onClose, onLogou
 }
 
 function DashboardHeader({ activePage, account, theme, onThemeToggle, onMenu, onGoHome, notifications, notificationOpen, setNotificationOpen, onMarkAllRead }) {
-  const titles = { overview: 'Overview', products: 'Product issues', account: 'Account health' }
+  const titles = { overview: 'Overview', products: 'Product issues', account: 'Account health', agency: 'Agency mode' }
   const notificationRef = useRef(null)
 
   useEffect(() => {
@@ -660,6 +667,8 @@ function ProductsPage({ data, onIssue, onExport, onSpecialist }) {
 
 function AccountPage({ data, onSpecialist }) {
   const isHealthy = data.account.status === 'healthy' || data.account.status === 'active'
+  const blockerCount = data.approvalChecks.filter((check) => check.status === 'blocker').length
+  const riskCount = data.approvalChecks.filter((check) => check.status === 'risk').length
   return (
     <div className="page">
       <div className="page-intro">
@@ -669,20 +678,73 @@ function AccountPage({ data, onSpecialist }) {
       <section className="account-hero panel">
         <div className={`account-hero__status ${isHealthy ? 'account-hero__status--healthy' : ''}`}><span>{isHealthy ? <ShieldCheck /> : <ShieldAlert />}</span><section><small>CURRENT STATUS</small><h2>{isHealthy ? 'Account in good standing' : 'Account needs attention'}</h2><p>{data.account.statusLabel}</p></section></div>
         <div className="account-hero__detail"><small>WHAT GOOGLE REPORTED</small><p>{data.account.statusDetail}</p><a className="policy-link" href="https://support.google.com/merchants/answer/6150127" target="_blank" rel="noreferrer">Read Google’s policy guidance <ExternalLink size={14} /></a></div>
-        <div className="account-hero__meta"><div><small>MERCHANT ID</small><b>{data.account.id.replace('MC-', '')}</b></div><div><small>MARKET</small><b>{data.account.country}</b></div><div><small>CONNECTED</small><b>{data.account.connectedAt}</b></div></div>
+        <div className="account-hero__meta"><div><small>WEBSITE</small><a href={data.account.website} target="_blank" rel="noreferrer">{data.account.website.replace('https://', '')} <ExternalLink size={12} /></a></div><div><small>MERCHANT ID</small><b>{data.account.id.replace('MC-', '')}</b></div><div><small>TARGET MARKET</small><b>{data.account.targetMarket}</b></div><div><small>CONNECTED</small><b>{data.account.connectedAt}</b></div></div>
       </section>
-      <section className="account-content">
-        <article className="panel account-diagnostics">
-          <div className="panel-head"><div><span className="panel-kicker">ISSUES FOUND</span><h2>Account diagnostics</h2></div><span className="count-pill">{data.accountIssues.length} total</span></div>
-          <div className="diagnostic-list">{data.accountIssues.map((issue) => <article key={issue.id}>
-            <span className={`issue-symbol issue-symbol--${issue.severity}`}>{issue.severity === 'critical' ? <AlertCircle /> : issue.severity === 'warning' ? <AlertTriangle /> : <Activity />}</span>
-            <section><div><h3>{issue.title}</h3><StatusBadge severity={issue.severity}>{issue.severity === 'info' ? 'Advisory' : issue.severity}</StatusBadge></div><small>{issue.type}</small><p>{issue.description}</p>{issue.href ? <a href={issue.href} target="_blank" rel="noreferrer">{issue.action} <ArrowUpRight size={14} /></a> : <button type="button" onClick={onSpecialist}>{issue.action} <ArrowUpRight size={14} /></button>}</section>
-          </article>)}</div>
-        </article>
-        <aside className="account-aside">
-          <article className="panel fix-estimate"><span><Clock3 /></span><small>ESTIMATED RESOLUTION</small><h2>{data.summary.estimatedFixTime}</h2><p>For the highest-priority account and product issues.</p><div><i /><span>Identify root cause</span></div><div><i /><span>Apply recommended fixes</span></div><div><i /><span>Request Google review</span></div></article>
-          <article className="expert-card"><span><Sparkles /></span><h2>Prefer expert help?</h2><p>A specialist can review remaining diagnostics, help apply fixes, and prepare your account for review.</p><button className="button button--lime" onClick={onSpecialist}>Talk to a specialist <ArrowRight size={16} /></button></article>
-        </aside>
+      <section className="approval-audit">
+        <div className="approval-audit__head">
+          <div><span className="overline">APPROVAL READINESS</span><h2>Find the problems that can stop your products from getting approved on Google Merchant Center.</h2><p>Each check explains the approval risk and the specific change to make next.</p></div>
+          <div className="approval-summary"><span><i className="approval-dot approval-dot--blocker" /><b>{blockerCount}</b> blockers</span><span><i className="approval-dot approval-dot--risk" /><b>{riskCount}</b> risks</span><span><i className="approval-dot approval-dot--passed" /><b>1</b> passed group</span></div>
+        </div>
+        <div className="priority-order"><span>Priority</span><b>Critical</b><i /><b>High</b><i /><b>Medium</b><i /><b>Low</b></div>
+        <div className="approval-checks-grid">
+          {data.approvalChecks.map((check) => (
+            <article className={`approval-check approval-check--${check.status}`} key={check.id}>
+              <header><span>{check.status === 'passed' ? <CheckCircle2 /> : check.status === 'risk' ? <AlertTriangle /> : <AlertCircle />}</span><div><h3>{check.title}</h3><p>{check.finding}</p></div><em className={`priority-badge priority-badge--${check.priority.toLowerCase()}`}>{check.status === 'passed' ? 'Passed' : check.priority}</em></header>
+              <div className="approval-check__detail"><p><b>{check.status === 'passed' ? 'Why it matters' : 'Why approval can fail'}</b>{check.why}</p><p><b>{check.status === 'passed' ? 'Next check' : 'What to fix'}</b>{check.fix}</p></div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="account-help-row">
+        <article className="panel fix-estimate"><span><Clock3 /></span><small>ESTIMATED RESOLUTION</small><h2>{data.summary.estimatedFixTime}</h2><p>For the highest-priority account and product issues.</p><div><i /><span>Identify root cause</span></div><div><i /><span>Apply recommended fixes</span></div><div><i /><span>Request Google review</span></div></article>
+        <article className="expert-card"><span><Sparkles /></span><h2>Prefer expert help?</h2><p>A specialist can review remaining diagnostics, help apply fixes, and prepare your account for review.</p><button className="button button--lime" onClick={onSpecialist}>Talk to a specialist <ArrowRight size={16} /></button></article>
+      </section>
+    </div>
+  )
+}
+
+function AgencyPage({ data, onRunAudit, onPrint, onSend, onSpecialist }) {
+  const [form, setForm] = useState({ website: data.account.website, merchantId: data.account.id.replace('MC-', ''), market: data.account.targetMarket })
+  const [reportReady, setReportReady] = useState(false)
+  const [auditing, setAuditing] = useState(false)
+
+  const submitAudit = async (event) => {
+    event.preventDefault()
+    setAuditing(true)
+    await onRunAudit()
+    setAuditing(false)
+    setReportReady(true)
+  }
+
+  return (
+    <div className="page page--agency">
+      <div className="page-intro agency-intro"><div><span className="overline">FREELANCER / AGENCY WORKSPACE</span><h1>Turn a free audit into a clear client next step.</h1><p>Audit a client site, create a branded report, and move approved work into a fix service.</p></div></div>
+      <section className="agency-workspace panel">
+        <form className="agency-audit-form" onSubmit={submitAudit}>
+          <div className="agency-form-heading"><span><Globe2 /></span><div><small>NEW CLIENT AUDIT</small><h2>Enter the client details</h2></div></div>
+          <label>Client website<div className="agency-input"><Globe2 /><input type="url" required value={form.website} onChange={(event) => setForm({ ...form, website: event.target.value })} placeholder="https://client-store.com" /></div></label>
+          <div className="agency-form-row">
+            <label>Google Merchant ID<input required inputMode="numeric" value={form.merchantId} onChange={(event) => setForm({ ...form, merchantId: event.target.value.replace(/\D/g, '') })} /></label>
+            <label>Target market<select value={form.market} onChange={(event) => setForm({ ...form, market: event.target.value })}><option>United States</option><option>United Kingdom</option><option>Canada</option><option>Australia</option><option>Germany</option></select></label>
+          </div>
+          <div className="agency-context-note"><ShieldCheck /><span>We will audit <b>{form.website.replace('https://', '') || 'the client website'}</b> against GMC <b>{form.merchantId || 'ID'}</b> for <b>{form.market}</b>.</span></div>
+          <button className="button button--primary" disabled={auditing}>{auditing ? <><span className="mini-spinner mini-spinner--light" /> Auditing client site...</> : <><FileSearch size={17} /> Run free client audit</>}</button>
+        </form>
+        <div className="agency-workflow">
+          <div className="agency-workflow__head"><span className="panel-kicker">DELIVERY WORKFLOW</span><h2>From URL to a client-ready action plan</h2></div>
+          <div className="agency-steps">
+            <article className="is-complete"><span>1</span><div><b>Client details</b><small>Website, GMC ID, and market added</small></div><Check /></article>
+            <article className={reportReady ? 'is-complete' : ''}><span>2</span><div><b>Approval audit</b><small>{reportReady ? `${data.approvalChecks.length} check groups reviewed` : 'Ready to scan the website and catalog'}</small></div>{reportReady ? <Check /> : <FileSearch />}</article>
+            <article className={reportReady ? 'is-ready' : ''}><span>3</span><div><b>Branded PDF</b><small>Generate a report under your agency brand</small></div><FileText /></article>
+            <article className={reportReady ? 'is-ready' : ''}><span>4</span><div><b>Send to client</b><small>Share findings and offer the fix service</small></div><Send /></article>
+          </div>
+          <div className="agency-delivery-actions"><button type="button" className="button button--outline" disabled={!reportReady} onClick={onPrint}><FileText size={16} /> Generate branded PDF</button><button type="button" className="button button--primary" disabled={!reportReady} onClick={() => onSend(form)}><Send size={16} /> Send to client</button></div>
+        </div>
+      </section>
+      <section className="agency-funnel panel">
+        <div><span>01</span><small>LEAD MAGNET</small><h2>Free Audit</h2><p>Show the approval blockers clearly.</p></div><ArrowRight />
+        <div><span>02</span><small>CLIENT DELIVERABLE</small><h2>PDF Report</h2><p>Package the priorities under your brand.</p></div><ArrowRight />
+        <div><span>03</span><small>PAID OUTCOME</small><h2>Fix Service</h2><p>Turn findings into scoped implementation work.</p><button type="button" onClick={onSpecialist}>Open fix request <ArrowUpRight size={15} /></button></div>
       </section>
     </div>
   )
@@ -814,6 +876,44 @@ function ScoreHelpModal({ onClose }) {
   )
 }
 
+function getSupportReply(message, data) {
+  const normalized = message.toLowerCase()
+  if (normalized.includes('price') || normalized.includes('availability')) return `I found 31 price or availability mismatches for GMC ${data.account.id.replace('MC-', '')}. Start by syncing the feed, visible product page, checkout, and structured data for ${data.account.targetMarket}.`
+  if (normalized.includes('gtin') || normalized.includes('brand') || normalized.includes('mpn')) return 'There are 64 identifier issues. Use the manufacturer GTIN where one exists; otherwise submit the correct brand and MPN and never invent an identifier.'
+  if (normalized.includes('suspend') || normalized.includes('misrepresentation') || normalized.includes('trust')) return 'Start with the Critical trust checks: make the legal business identity and contact details consistent across the website, checkout, policies, and Merchant Center before requesting another review.'
+  if (normalized.includes('report') || normalized.includes('pdf') || normalized.includes('client')) return 'Open Agency mode from the sidebar. The website, GMC ID, and target market are prefilled, then you can run the audit, generate the branded PDF, and send it to the client.'
+  if (normalized.includes('human') || normalized.includes('specialist') || normalized.includes('agent')) return 'I can hand this context to a GMC specialist so you do not have to repeat the website, Merchant ID, or target market.'
+  return `For ${data.account.name}, I would fix Critical approval blockers first, then High-priority product and technical issues. I already have ${data.account.website.replace('https://', '')}, GMC ${data.account.id.replace('MC-', '')}, and ${data.account.targetMarket} in context.`
+}
+
+function SupportChat({ data, onSpecialist }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [messages, setMessages] = useState([{ id: 1, role: 'assistant', text: `Hi ${data.user.name.split(' ')[0]} - I can help prioritize this audit or bring in a GMC specialist.` }])
+  const suggestions = ['What should I fix first?', 'Explain GTIN issues', 'How do I send a client report?']
+
+  const sendMessage = (value) => {
+    const text = value.trim()
+    if (!text) return
+    setMessages((current) => [...current, { id: Date.now(), role: 'user', text }, { id: Date.now() + 1, role: 'assistant', text: getSupportReply(text, data) }])
+    setDraft('')
+  }
+
+  return (
+    <div className={`support-chat ${open ? 'support-chat--open' : ''}`}>
+      {open && <section className="support-chat__panel" role="dialog" aria-modal="false" aria-label="Live GMC support">
+        <header><span><Bot /></span><div><b>Live GMC support</b><small><i /> Online - audit context connected</small></div><button type="button" onClick={() => setOpen(false)} aria-label="Close live support"><X /></button></header>
+        <div className="support-chat__context"><a href={data.account.website} target="_blank" rel="noreferrer"><Globe2 /> {data.account.website.replace('https://', '')}</a><span>GMC {data.account.id.replace('MC-', '')}</span><span>{data.account.targetMarket}</span></div>
+        <div className="support-chat__messages">{messages.map((message) => <div className={`chat-message chat-message--${message.role}`} key={message.id}>{message.text}</div>)}</div>
+        <div className="support-chat__suggestions">{suggestions.map((suggestion) => <button type="button" key={suggestion} onClick={() => sendMessage(suggestion)}>{suggestion}</button>)}</div>
+        <form className="support-chat__composer" onSubmit={(event) => { event.preventDefault(); sendMessage(draft) }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about this audit..." aria-label="Message live support" /><button type="submit" aria-label="Send message" disabled={!draft.trim()}><Send /></button></form>
+        <button type="button" className="support-chat__human" onClick={() => { setOpen(false); onSpecialist() }}><LifeBuoy /> Talk to a specialist</button>
+      </section>}
+      <button type="button" className="support-chat__launcher" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? 'Close live support' : 'Open live support'}>{open ? <X /> : <MessageCircle />}<span>{open ? 'Close' : 'Live support'}</span></button>
+    </div>
+  )
+}
+
 function MobileBottomNav({ activePage, onNavigate }) {
   return <nav className="mobile-bottom-nav">{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={activePage === id ? 'active' : ''} onClick={() => onNavigate(id)}><Icon /><span>{id === 'products' ? 'Products' : id === 'account' ? 'Account' : label}</span></button>)}</nav>
 }
@@ -821,7 +921,7 @@ function MobileBottomNav({ activePage, onNavigate }) {
 function Dashboard({ data, theme, onThemeToggle, onLogout, onGoHome, setData }) {
   const location = useLocation()
   const navigate = useNavigate()
-  const activePage = location.pathname.endsWith('/products') ? 'products' : location.pathname.endsWith('/account') ? 'account' : 'overview'
+  const activePage = location.pathname.endsWith('/products') ? 'products' : location.pathname.endsWith('/account') ? 'account' : location.pathname.endsWith('/agency') ? 'agency' : 'overview'
   const navigatePage = (page) => navigate(page === 'overview' ? '/dashboard' : `/dashboard/${page}`)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notificationOpen, setNotificationOpen] = useState(false)
@@ -843,6 +943,7 @@ function Dashboard({ data, theme, onThemeToggle, onLogout, onGoHome, setData }) 
     setAuditProgress({ index: 0, label: 'Preparing secure connection', percent: 3 })
     const refreshed = await auditService.runAudit(setAuditProgress)
     setData(refreshed)
+    return refreshed
   }
 
   const exportCsv = () => {
@@ -882,9 +983,11 @@ function Dashboard({ data, theme, onThemeToggle, onLogout, onGoHome, setData }) 
         {activePage === 'overview' && <OverviewPage {...commonProps} onRunAudit={runAudit} onNavigate={navigatePage} onIssue={setSelectedIssue} onExport={exportCsv} onPrint={() => window.print()} onScoreHelp={() => setScoreHelpOpen(true)} />}
         {activePage === 'products' && <ProductsPage data={data} onIssue={setSelectedIssue} onExport={exportCsv} onSpecialist={() => setSpecialistOpen(true)} />}
         {activePage === 'account' && <AccountPage {...commonProps} />}
+        {activePage === 'agency' && <AgencyPage {...commonProps} onRunAudit={runAudit} onPrint={() => window.print()} onSend={(client) => setToast(`Client report prepared for ${client.website.replace('https://', '')}.`)} />}
         <footer className="dashboard-footer"><span>MerchantAudit demo · Data last synced {data.account.lastAudit}</span><span>Read-only connection <ShieldCheck size={14} /></span></footer>
       </div>
       <MobileBottomNav activePage={activePage} onNavigate={navigatePage} />
+      <SupportChat data={data} onSpecialist={() => setSpecialistOpen(true)} />
       {auditProgress && <AuditModal progress={auditProgress} onClose={() => { setAuditProgress(null); setToast('Your audit results are up to date.') }} />}
       <IssueDrawer issue={selectedIssue} onClose={() => setSelectedIssue(null)} onSpecialist={() => setSpecialistOpen(true)} onViewProducts={viewAffectedProducts} />
       {specialistOpen && <SpecialistModal user={data.user} onClose={() => setSpecialistOpen(false)} onSubmit={submitSpecialist} />}
@@ -954,6 +1057,7 @@ export default function App() {
         <Route path="/dashboard" element={dashboardRoute} />
         <Route path="/dashboard/products" element={dashboardRoute} />
         <Route path="/dashboard/account" element={dashboardRoute} />
+        <Route path="/dashboard/agency" element={dashboardRoute} />
         <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
