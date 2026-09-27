@@ -1,0 +1,2 @@
+"""MerchantAudit FastAPI application package."""
+

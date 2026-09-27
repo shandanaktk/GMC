@@ -566,6 +566,13 @@ svg { flex-shrink: 0; }
 .route-loader__orbit::before { content: ""; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 50%; }
 .route-loader__orbit i { width: 9px; height: 9px; position: absolute; top: 2px; left: 22px; background: var(--lime-strong); border-radius: 50%; box-shadow: 0 0 0 4px var(--lime-soft); transform-origin: 5px 25px; animation: routeOrbit 1.1s linear infinite; }
 .route-loader p { margin: 0; font-size: 12px; }
+.route-loader--error { padding: 28px; text-align: center; }.route-loader--error > svg { width: 42px; height: 42px; color: var(--red); }.route-loader--error h2 { margin: 0; color: var(--text); font: 600 24px var(--font-display); }.route-loader--error p { max-width: 560px; line-height: 1.55; }.route-loader--error > div { display: flex; gap: 10px; }
+.account-select { width: 100%; padding: 0 18px 0 0; overflow: hidden; color: var(--text); background: transparent; border: 0; outline: 0; font: 700 13px var(--font-display); text-overflow: ellipsis; cursor: pointer; }
+.account-select option { color: var(--text); background: var(--surface); }
+.product-thumb { overflow: hidden; color: var(--green); background: var(--green-soft); }.product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.row-menu a { min-height: 36px; padding: 0 10px; display: flex; align-items: center; color: var(--text-soft); border-radius: 8px; font-size: 13px; font-weight: 600; }.row-menu a:hover { color: var(--text); background: var(--surface-soft); }
+.form-error, .landing-error { color: var(--red) !important; }.form-error { margin: 0; padding: 10px 12px; background: var(--red-soft); border-radius: 9px; font-size: 11px; line-height: 1.45; }.landing-error { max-width: 650px; padding: 10px 12px; background: rgba(222,98,77,.16); border: 1px solid rgba(222,98,77,.35); border-radius: 9px; }.filter-button.active { color: var(--red); border-color: color-mix(in srgb, var(--red) 35%, var(--border)); }
+.account-diagnostics--full { margin-top: 13px; padding: 20px; }.account-diagnostics--full .empty-state { min-height: 180px; }.drawer-policy-link { margin-top: 15px; }
 @keyframes routeOrbit { to { transform: rotate(360deg); } }
 
 
