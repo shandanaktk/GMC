@@ -9,6 +9,7 @@ backend/.pytest_cache/
 .env
 .env.*
 !.env.example
+!frontend/.env.production
 *.local
 *.log
 .DS_Store
